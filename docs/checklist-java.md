@@ -11,20 +11,21 @@
 - [ ] Подключить OpenTelemetry, Prometheus, Grafana для мониторинга
 - [ ] Настроить CI/CD pipeline (GitHub Actions, Docker registry)
 
-### Этап 2: Auth/Identity Service
-- [ ] Создать базовую структуру проекта Auth Service
-- [ ] Реализовать модели данных и миграции Flyway
-- [ ] Настроить JWT токены и OIDC совместимость
-- [ ] Реализовать CRUD операции для пользователей и ролей
-- [ ] Добавить аутентификацию и авторизацию
-- [ ] Настроить тестирование (unit + integration)
-- [ ] Описать OpenAPI и протестировать endpoints
+### Этап 2: Интеграция с Keycloak
+- [ ] Настроить Keycloak сервер (Docker Compose или отдельный инстанс)
+- [ ] Создать realm для TaskForge приложения
+- [ ] Настроить клиенты для frontend и backend сервисов
+- [ ] Создать роли и группы пользователей в Keycloak
+- [ ] Настроить пользовательские атрибуты (display_name, department, etc.)
+- [ ] Реализовать интеграцию с Keycloak через Spring Security OAuth2
+- [ ] Настроить JWT token validation с публичными ключами Keycloak
+- [ ] Добавить тестирование интеграции с Keycloak
 
 ### Этап 3: Projects Service
-- [ ] Создать Projects Service на базе Auth Service
-- [ ] Реализовать модели данных и связи с пользователями
+- [ ] Создать Projects Service с интеграцией Keycloak
+- [ ] Реализовать модели данных и связи с пользователями (user_id из Keycloak)
 - [ ] Добавить CRUD операции для проектов
-- [ ] Реализовать управление участниками проекта
+- [ ] Реализовать управление участниками проекта (синхронизация с Keycloak группами)
 - [ ] Настроить события (project.created, project.updated)
 - [ ] Добавить тестирование и документацию
 
@@ -83,23 +84,27 @@
 
 ---
 
-## Auth/Identity Service
-- Модель данных (PostgreSQL):
-  - `users(id, email, password_hash, display_name, status, created_at, updated_at)`
-  - `roles(id, code, name)`
-  - `user_roles(user_id, role_id)`
-  - `refresh_tokens(id, user_id, token, expires_at, revoked)`
-- API:
-  - POST `/auth/register`, POST `/auth/login`, POST `/auth/refresh`, POST `/auth/logout`
-  - GET `/users/me`, GET `/users/{id}`, GET `/users` (поиск/пагинация)
-  - POST `/users/{id}/roles`, DELETE `/users/{id}/roles/{role}`
-- Безопасность:
-  - Пароли — Argon2/BCrypt, JWT (RS256), ротация refresh-токенов, ограничение попыток входа.
-  - OIDC совместимость для Gateway.
+## Keycloak Integration
+- Конфигурация Keycloak:
+  - Realm: `taskforge`
+  - Clients: `taskforge-frontend`, `taskforge-backend`
+  - Роли: `admin`, `project_manager`, `developer`, `viewer`
+  - Группы: `project-{projectId}-members`, `project-{projectId}-admins`
+  - Пользовательские атрибуты: `display_name`, `department`, `phone`
+- Spring Security OAuth2:
+  - JWT token validation с публичными ключами Keycloak
+  - Автоматическое извлечение ролей из JWT claims
+  - Интеграция с Spring Security для method-level security
+- API для синхронизации:
+  - GET `/users/sync` — синхронизация пользователей из Keycloak
+  - GET `/users/{id}` — получение информации о пользователе
+  - GET `/users` — поиск пользователей (поиск/пагинация)
 - События:
-  - Публикация `user.created`, `user.updated` при регистрации/изменении.
+  - Публикация `user.synced`, `user.updated` при синхронизации из Keycloak
 - Тестирование:
-  - Интеграционные тесты аутентификации/авторизации, миграций и репозиториев.
+  - Интеграционные тесты с Keycloak Testcontainers
+  - Тестирование JWT token validation
+  - Тестирование синхронизации пользователей
 
 ## Projects Service
 - Модель данных (PostgreSQL):
@@ -292,9 +297,11 @@
 - [ ] Добавить alerting rules в Prometheus для критических метрик
 
 ### Security Patterns
-- [ ] Реализовать JWT token validation с публичными ключами
+- [ ] Реализовать JWT token validation с публичными ключами Keycloak
 - [ ] Добавить RBAC (Role-Based Access Control) на уровне методов
 - [ ] Настроить method-level security с `@PreAuthorize` аннотациями
+- [ ] Реализовать синхронизацию пользователей и ролей с Keycloak
+- [ ] Добавить интеграцию с Keycloak Admin API для управления пользователями
 - [ ] Реализовать audit logging для всех изменений данных
 - [ ] Добавить input validation и sanitization для предотвращения инъекций
 

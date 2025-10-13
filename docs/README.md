@@ -6,6 +6,7 @@
 - [Распределение сервисов и стек технологий](./service-assignments.md)
 - [Чек-лист разработчика (Java)](./checklist-java.md)
 - [Чек-лист разработчика (.NET)](./checklist-dotnet.md)
+- [Стандарты кодирования и лучшие практики](./coding-standards.md)
 - [Схемы реляционных БД (ER-диаграмма и описание таблиц)](./db-relational.md)
 - [Схемы NoSQL (MongoDB/Redis/Elasticsearch)](./db-nosql.md)
 - [Межсервисное взаимодействие (диаграммы)](./interservice-diagrams.md)
