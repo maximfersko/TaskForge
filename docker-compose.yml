@@ -18,6 +18,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - taskforge-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME} -d ${POSTGRES_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
 
 
   mongo:
@@ -109,6 +115,30 @@ services:
       - .env
     depends_on:
       - redis
+    networks:
+      - taskforge-network
+
+  liquibase:
+    build:
+      context: .
+      dockerfile: infrastructure/database/migrations/Dockerfile.liquebase
+    container_name: taskforge_liquibase
+    volumes:
+      - ./infrastructure/database/migrations/changelog:/liquibase/changelog
+    environment:
+      LIQUIBASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DATABASE}
+      LIQUIBASE_USERNAME: ${POSTGRES_USERNAME}
+      LIQUIBASE_PASSWORD: ${POSTGRES_PASSWORD}
+      LIQUIBASE_CHANGELOG_FILE: db.changelog-master.xml
+    command:
+      - --changelog-file=changelog/db.changelog-master.xml
+      - --url=jdbc:postgresql://postgres:5432/${POSTGRES_DATABASE}
+      - --username=${POSTGRES_USERNAME}
+      - --password=${POSTGRES_PASSWORD}
+      - update
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - taskforge-network
 
